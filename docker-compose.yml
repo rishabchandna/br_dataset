@@ -3,7 +3,7 @@ version: "3.9"
 services:
 
   postgres:
-    image: postgres
+    image: postgres:15
     container_name: my_postgres
     environment:
       POSTGRES_USER: ${POSTGRES_USER}
@@ -12,8 +12,20 @@ services:
     ports:
       - "5432:5432"
     volumes:
-      - pgdata:/var/lib/postgresql/18/main
+      - pgdata:/var/lib/postgresql/data
 
+  postgres_metabase:
+    image: postgres:15
+    container_name: my_postgres_metabase
+    environment:
+      POSTGRES_USER: ${METABASE_DB_USER}
+      POSTGRES_PASSWORD: ${METABASE_DB_PASSWORD}
+      POSTGRES_DB: ${METABASE_DB_NAME}
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_metabase:/var/lib/postgresql/data
+  
   pgadmin:
     image: dpage/pgadmin4
     container_name: my_pgadmin
@@ -25,22 +37,21 @@ services:
     depends_on:
       - postgres
 
-  superset:
-    image: apache/superset
-    container_name: my_superset
+  metabase:
+    image: metabase/metabase
+    container_name: my_metabase
     environment:
-      SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY}
+      MB_DB_TYPE: postgres
+      MB_DB_DBNAME: ${METABASE_DB_NAME}
+      MB_DB_PORT: 5432
+      MB_DB_USER: ${METABASE_DB_USER}
+      MB_DB_PASS: ${METABASE_DB_PASSWORD}
+      MB_DB_HOST: postgres_metabase
     ports:
-      - "8088:8088"
-    volumes:
-      - ./config.json:/home/superset/config.json
+      - "3000:3000"
     depends_on:
-      - redis
-      - postgres
-
-  redis:
-    image: redis:7
-    container_name: my_redis
+      - postgres_metabase
 
 volumes:
   pgdata:
+  pgdata_metabase:
